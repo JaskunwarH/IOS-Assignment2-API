@@ -24,7 +24,13 @@ namespace StockWiseAPI.Controllers
         [HttpGet("summary")]
         public async Task<IActionResult> GetStockSummary([FromQuery] string symbol = "AAPL")
         {
-            string apiKey = _config["AlphaVantageKey"];
+            string apiKey = _config["AlphaVantageKey"] ?? "";
+            
+            if (string.IsNullOrEmpty(apiKey) || apiKey == "<YOUR_ALPHA_VANTAGE_KEY>")
+            {
+                return StatusCode(500, "AlphaVantageKey is not configured. Please set the AlphaVantageKey in Azure App Service configuration.");
+            }
+            
             // string url = $"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={apiKey}";
             string url = $"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={apiKey}";
 

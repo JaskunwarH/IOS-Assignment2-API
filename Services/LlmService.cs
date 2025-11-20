@@ -14,12 +14,15 @@ namespace StockWiseAPI.Services
         public LlmService(IConfiguration config)
         {
             _client = new HttpClient();
-            _token = config["GitHubToken"] ?? throw new Exception("GitHubToken not found in configuration.");
+            _token = config["GitHubToken"] ?? "";
             _endpoint = config["LlmEndpoint"] ?? "https://models.inference.ai.azure.com/v1/chat/completions";
             _model = config["LlmModel"] ?? "gpt-4o-mini";
 
-            _client.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", _token);
+            if (!string.IsNullOrEmpty(_token))
+            {
+                _client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", _token);
+            }
         }
 
         public async Task<string> SummarizeStockAsync(string symbol, string price, string change, string percentChange)
@@ -43,6 +46,13 @@ namespace StockWiseAPI.Services
 
             try
             {
+                // If no token is configured, return a basic summary
+                if (string.IsNullOrEmpty(_token))
+                {
+                    Console.WriteLine("GitHub token not configured, using fallback summary");
+                    return $"Stock {symbol} is currently priced at ${price}, with a change of {change} ({percentChange}).";
+                }
+
                 Console.WriteLine($"Calling LLM endpoint: {_endpoint}");
                 Console.WriteLine($"Using model: {_model}");
                 var response = await _client.PostAsync(_endpoint, content);
